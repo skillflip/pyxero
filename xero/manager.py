@@ -12,6 +12,9 @@ from .exceptions import *
 
 class Manager(object):
     DECORATED_METHODS = ('get', 'save', 'filter', 'all', 'put')
+    
+    # For some endpoints we just want the raw XML response back
+    RAW_RESPONSE_ENTITIES = ('Reports',) 
 
     DATETIME_FIELDS = (u'UpdatedDateUTC', u'Updated', u'FullyPaidOnDate')
     DATE_FIELDS = (u'DueDate', u'Date')
@@ -153,8 +156,11 @@ class Manager(object):
                     return response.text
                 # parseString takes byte content, not unicode.
                 dom = parseString(response.text.encode(response.encoding))
-                data = self.convert_to_dict(self.walk_dom(dom))
-                return self._get_results(data)
+                if self.name in self.RAW_RESPONSE_ENTITIES:
+                  return dom
+                else:
+                  data = self.convert_to_dict(self.walk_dom(dom))
+                  return self._get_results(data)
 
             elif response.status_code == 400:
                 raise XeroBadRequest(response)
