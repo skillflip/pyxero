@@ -221,6 +221,11 @@ class Manager(object):
         headers = None
         uri = '/'.join([XERO_API_URL, self.name])
         if kwargs:
+            if 'report' in kwargs:
+                report = kwargs['report']
+                uri = '/'.join([XERO_API_URL, self.name, report])
+                del kwargs['report']
+        
             if 'since' in kwargs:
                 val = kwargs['since']
                 headers = self.prepare_filtering_date(val)
