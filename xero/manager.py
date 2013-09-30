@@ -221,11 +221,6 @@ class Manager(object):
         headers = None
         uri = '/'.join([XERO_API_URL, self.name])
         if kwargs:
-            if 'report' in kwargs:
-                report = kwargs['report']
-                uri = '/'.join([XERO_API_URL, self.name, report])
-                del kwargs['report']
-        
             if 'since' in kwargs:
                 val = kwargs['since']
                 headers = self.prepare_filtering_date(val)
@@ -260,6 +255,36 @@ class Manager(object):
             if params:
                 uri += '?where=' + urllib.quote('&&'.join(params))
 
+        return uri, 'get', None, headers
+        
+    def report_filter(self, id, headers=None, **kwargs):
+        uri = '/'.join([XERO_API_URL, self.name, id])
+        if kwargs:
+            if 'since' in kwargs:
+                val = kwargs['since']
+                headers = self.prepare_filtering_date(val)
+                del kwargs['since']
+
+            def get_filter_params():
+                if key in self.BOOLEAN_FIELDS:
+                    return 'true' if kwargs[key] else 'false'
+                elif key in self.DATETIME_FIELDS:
+                    return kwargs[key].isoformat()
+                else:
+                    return '"%s"' % str(kwargs[key])
+  
+            def generate_param(key):
+                fmt = '%s=%s'
+                return fmt % (
+                    key,
+                    get_filter_params()
+                )
+
+            params = [generate_param(key) for key in kwargs.keys()]
+
+            if params:
+                uri += '?' + urllib.quote('&'.join(params))
+        
         return uri, 'get', None, headers
 
     def all(self):
