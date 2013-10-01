@@ -11,7 +11,7 @@ from .exceptions import *
 
 
 class Manager(object):
-    DECORATED_METHODS = ('get', 'save', 'filter', 'all', 'put')
+    DECORATED_METHODS = ('get', 'save', 'filter', 'report_filter', 'all', 'put')
     
     # For some endpoints we just want the raw XML response back
     RAW_RESPONSE_ENTITIES = ('Reports',) 
@@ -271,7 +271,7 @@ class Manager(object):
                 elif key in self.DATETIME_FIELDS:
                     return kwargs[key].isoformat()
                 else:
-                    return '"%s"' % str(kwargs[key])
+                    return '%s' % str(kwargs[key])
   
             def generate_param(key):
                 fmt = '%s=%s'
@@ -283,7 +283,7 @@ class Manager(object):
             params = [generate_param(key) for key in kwargs.keys()]
 
             if params:
-                uri += '?' + urllib.quote('&'.join(params))
+                uri += '?' + '&'.join(params)
         
         return uri, 'get', None, headers
 
