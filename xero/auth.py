@@ -1,3 +1,4 @@
+import datetime
 import requests
 from requests_oauthlib import OAuth1
 from oauthlib.oauth1 import SIGNATURE_RSA, SIGNATURE_TYPE_AUTH_HEADER
@@ -287,7 +288,8 @@ class PartnerCredentials(object):
     """
     def __init__(self, consumer_key, consumer_secret, rsa_key, client_cert,
                  callback_uri=None, verified=False,
-                 oauth_token=None, oauth_token_secret=None, oauth_session_handle=None):
+                 oauth_token=None, oauth_token_secret=None, oauth_session_handle=None,
+                 oauth_expires_at=None, oauth_authorization_expires_at=None):
         """Construct the auth instance.
 
         Must provide the consumer key, secret, and RSA key.
@@ -303,6 +305,8 @@ class PartnerCredentials(object):
         self.callback_uri = callback_uri
         self.verified = verified
         self.oauth_session_handle = oauth_session_handle
+        self.oauth_expires_at = oauth_expires_at
+        self.oauth_authorization_expires_at = oauth_authorization_expires_at
         self._oauth = None
 
         if oauth_token and oauth_token_secret:
@@ -327,18 +331,12 @@ class PartnerCredentials(object):
                 signature_method=SIGNATURE_RSA,
             )
 
-            oauth_params = {'oauth_session_handle': self.oauth_session_handle}
-            response = requests.post(url=PARTNER_REQUEST_TOKEN_URL, params=oauth_params, auth=oauth, cert=client_cert)
+            response = requests.post(url=PARTNER_REQUEST_TOKEN_URL, auth=oauth, cert=client_cert)
 
             if response.status_code == 200:
                 credentials = parse_qs(response.text)
                 self.oauth_token = credentials.get('oauth_token')[0]
                 self.oauth_token_secret = credentials.get('oauth_token_secret')[0]
-                self.oauth_expires_in = credentials.get('oauth_expires_in')[0]
-                self.oauth_session_handle = credentials.get('oauth_session_handle')[0]
-                self.oauth_authorisation_expires_in = credentials.get('oauth_authorisation_expires_in')[0]
-                
-                # TODO convert expires_in to expires_at
 
             elif response.status_code == 400:
                 raise XeroBadRequest(response)
@@ -398,7 +396,8 @@ class PartnerCredentials(object):
             for attr in (
                 'consumer_key', 'consumer_secret', 'callback_uri',
                 'verified', 'oauth_token', 'oauth_token_secret',
-                'oauth_session_handle'
+                'oauth_session_handle', 'oauth_expires_at', 
+                'oauth_authorization_expires_at'
             )
             if getattr(self, attr) is not None
         )
@@ -417,16 +416,47 @@ class PartnerCredentials(object):
             signature_method=SIGNATURE_RSA,
         )
 
-        # Make the verification request, gettiung back an access token
+        # Make the verification request, getting back an access token
         response = requests.post(url=PARTNER_ACCESS_TOKEN_URL, auth=oauth, cert=self.client_cert)
+        self._process_access_token_response(response)
 
+    def refresh(self):
+        "Refresh an expired token"
+        # Construct the credentials for the verification request
+        oauth = OAuth1(
+            self.consumer_key,
+            client_secret=self.consumer_secret,
+            resource_owner_key=self.oauth_token,
+            resource_owner_secret=self.oauth_token_secret,
+            rsa_key=self.rsa_key,
+            signature_method=SIGNATURE_RSA,
+        )
+
+        # Make the verification request, getting back an access token
+        params = {'oauth_session_handle': self.oauth_session_handle}
+        response = requests.post(url=PARTNER_ACCESS_TOKEN_URL, params=params, auth=oauth, cert=self.client_cert)
+        self._process_access_token_response(response)
+
+    def _process_access_token_response(self, response):
         if response.status_code == 200:
             credentials = parse_qs(response.text)
+
             # Initialize the oauth credentials
             self._init_oauth(
                 credentials.get('oauth_token')[0],
                 credentials.get('oauth_token_secret')[0]
             )
+            
+            self.oauth_expires_in = credentials.get('oauth_expires_in')[0]
+            self.oauth_session_handle = credentials.get('oauth_session_handle')[0]
+            self.oauth_authorisation_expires_in = credentials.get('oauth_authorization_expires_in')[0]
+            
+            # Calculate token/auth expiry
+            self.oauth_expires_at = datetime.datetime.now() + \
+                                    datetime.timedelta(seconds=int(self.oauth_expires_in))
+            self.oauth_authorization_expires_at = \
+                                    datetime.datetime.now() + \
+                                    datetime.timedelta(seconds=int(self.oauth_authorisation_expires_in))
         elif response.status_code == 400:
             raise XeroBadRequest(response)
 
