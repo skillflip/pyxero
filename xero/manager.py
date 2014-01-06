@@ -25,6 +25,7 @@ class Manager(object):
 
     def __init__(self, name, oauth):
         self.oauth = oauth
+        self.api_url = oauth.api_url
         self.name = name
 
         # setup our singular variants of the name
@@ -149,7 +150,8 @@ class Manager(object):
     def _get_data(self, func):
         def wrapper(*args, **kwargs):
             uri, method, body, headers = func(*args, **kwargs)
-            response = getattr(requests, method)(uri, data=body, headers=headers, auth=self.oauth)
+            cert = getattr(self.oauth, 'client_cert', None)
+            response = getattr(requests, method)(uri, data=body, headers=headers, auth=self.oauth, cert=cert)
 
             if response.status_code == 200:
                 if response.headers['content-type'] == 'application/pdf':
@@ -196,11 +198,11 @@ class Manager(object):
         return wrapper
 
     def get(self, id, headers=None):
-        uri = '/'.join([XERO_API_URL, self.name, id])
+        uri = '/'.join([self.api_url, self.name, id])
         return uri, 'get', None, headers
 
     def save_or_put(self, data, method='post', headers=None):
-        uri = '/'.join([XERO_API_URL, self.name])
+        uri = '/'.join([self.api_url, self.name])
         body = {'xml': self._prepare_data_for_save(data)}
         return uri, method, body, headers
 
@@ -219,7 +221,7 @@ class Manager(object):
 
     def filter(self, **kwargs):
         headers = None
-        uri = '/'.join([XERO_API_URL, self.name])
+        uri = '/'.join([self.api_url, self.name])
         if kwargs:
             if 'since' in kwargs:
                 val = kwargs['since']
@@ -258,7 +260,7 @@ class Manager(object):
         return uri, 'get', None, headers
         
     def report_filter(self, id, headers=None, **kwargs):
-        uri = '/'.join([XERO_API_URL, self.name, id])
+        uri = '/'.join([self.api_url, self.name, id])
         if kwargs:
             if 'since' in kwargs:
                 val = kwargs['since']
@@ -288,5 +290,5 @@ class Manager(object):
         return uri, 'get', None, headers
 
     def all(self):
-        uri = '/'.join([XERO_API_URL, self.name])
+        uri = '/'.join([self.api_url, self.name])
         return uri, 'get', None, None
