@@ -384,7 +384,7 @@ class PartnerCredentials(object):
             signature_method=SIGNATURE_RSA,
         )
         self._oauth.client_cert = self.client_cert
-        self._oauth.api_url = XERO_API_URL
+        self._oauth.api_url = PARTNER_XERO_API_URL
 
     @property
     def state(self):
