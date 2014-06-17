@@ -221,12 +221,16 @@ class Manager(object):
 
     def filter(self, **kwargs):
         headers = None
+        offset = None        
         uri = '/'.join([self.api_url, self.name])
         if kwargs:
             if 'since' in kwargs:
                 val = kwargs['since']
                 headers = self.prepare_filtering_date(val)
                 del kwargs['since']
+                
+            if 'offset' in kwargs:
+                offset = kwargs.pop('offset')
 
             def get_filter_params():
                 if key in self.BOOLEAN_FIELDS:
@@ -256,6 +260,12 @@ class Manager(object):
 
             if params:
                 uri += '?where=' + urllib.quote('&&'.join(params))
+                
+            if offset:
+                if not params:
+                    uri += '?'
+                
+                uri += 'offset={0}'.format(offset)
 
         return uri, 'get', None, headers
         
