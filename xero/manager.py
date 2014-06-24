@@ -16,11 +16,11 @@ class Manager(object):
     # For some endpoints we just want the raw XML response back
     RAW_RESPONSE_ENTITIES = ('Reports',) 
 
-    DATETIME_FIELDS = (u'UpdatedDateUTC', u'Updated', u'FullyPaidOnDate')
-    DATE_FIELDS = (u'DueDate', u'Date')
+    DATETIME_FIELDS = (u'UpdatedDateUTC', u'Updated', u'FullyPaidOnDate', u'CreatedDateUTC')
+    DATE_FIELDS = (u'DueDate', u'Date', u'JournalDate')
     BOOLEAN_FIELDS = (u'IsSupplier', u'IsCustomer')
 
-    MULTI_LINES = (u'LineItem', u'Phone', u'Address', 'TaxRate')
+    MULTI_LINES = (u'LineItem', u'Phone', u'Address', u'TaxRate', u'JournalLine', u'TrackingCategory')
     PLURAL_EXCEPTIONS = {'Addresse': 'Address'}
 
     def __init__(self, name, oauth):
