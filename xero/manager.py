@@ -16,11 +16,14 @@ class Manager(object):
     # For some endpoints we just want the raw XML response back
     RAW_RESPONSE_ENTITIES = ('Reports',) 
 
-    DATETIME_FIELDS = (u'UpdatedDateUTC', u'Updated', u'FullyPaidOnDate', u'CreatedDateUTC')
+    DATETIME_FIELDS = (u'UpdatedDateUTC', u'Updated', u'FullyPaidOnDate', u'CreatedDateUTC',
+            u'ExpectedPaymentDate', u'PlannedPaymentDate')
     DATE_FIELDS = (u'DueDate', u'Date', u'JournalDate')
     BOOLEAN_FIELDS = (u'IsSupplier', u'IsCustomer')
 
-    MULTI_LINES = (u'LineItem', u'Phone', u'Address', u'TaxRate', u'JournalLine', u'TrackingCategory')
+    MULTI_LINES = (u'LineItem', u'Phone', u'Address', u'TaxRate', 
+            u'JournalLine', u'TrackingCategory', u'Payment')
+
     PLURAL_EXCEPTIONS = {'Addresse': 'Address'}
 
     def __init__(self, name, oauth):
@@ -231,6 +234,9 @@ class Manager(object):
                 
             if 'offset' in kwargs:
                 offset = kwargs.pop('offset')
+            
+            if 'page' in kwargs:
+                offset = kwargs.pop('page')
 
             def get_filter_params():
                 if key in self.BOOLEAN_FIELDS:
@@ -256,16 +262,20 @@ class Manager(object):
                     get_filter_params()
                 )
 
-            params = [generate_param(key) for key in kwargs.keys()]
+            query_string_items = []
 
+            params = [generate_param(key) for key in kwargs.keys()]
             if params:
-                uri += '?where=' + urllib.quote('&&'.join(params))
+                query_string_items.append('where=' + urllib.quote('&&'.join(params)))
                 
             if offset:
-                if not params:
-                    uri += '?'
-                
-                uri += 'offset={0}'.format(offset)
+                query_string_items.append('offset={0}'.format(offset))
+
+            if page:
+                query_string_items.append('page={0}'.format(page))
+
+            if len(query_string_items) > 0:
+                uri += "?" + '&'.join(query_string_items)
 
         return uri, 'get', None, headers
         
