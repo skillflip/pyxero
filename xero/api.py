@@ -15,4 +15,16 @@ class Xero(object):
         # the lowercase name of the object and attach it to an
         # instance of a Manager object to operate on it
         for name in self.OBJECT_LIST:
-            setattr(self, name.lower(), Manager(name, credentials.oauth))
+            setattr(self, name.lower(), Manager(name, credentials.oauth, 'api'))
+
+        self.payroll = Payroll(credentials)
+
+class Payroll(object):
+    """An ORM-like interface to the Xero Payroll API"""
+
+    OBJECT_LIST = (u'Employees', u'Timesheets', u'PayItems')
+
+    def __init__(self, credentials):
+        for name in self.OBJECT_LIST:
+            setattr(self, name.lower(), Manager(name, credentials.oauth, 'payroll'))
+

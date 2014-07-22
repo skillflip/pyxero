@@ -17,19 +17,26 @@ class Manager(object):
     RAW_RESPONSE_ENTITIES = ('Reports',) 
 
     DATETIME_FIELDS = (u'UpdatedDateUTC', u'Updated', u'FullyPaidOnDate', u'CreatedDateUTC',
-            u'ExpectedPaymentDate', u'PlannedPaymentDate')
+            u'ExpectedPaymentDate', u'PlannedPaymentDate', u'DateOfBirth', u'StartDate')
     DATE_FIELDS = (u'DueDate', u'Date', u'JournalDate')
     BOOLEAN_FIELDS = (u'IsSupplier', u'IsCustomer')
 
     MULTI_LINES = (u'LineItem', u'Phone', u'Address', u'TaxRate', 
-            u'JournalLine', u'TrackingCategory', u'Payment')
+            u'JournalLine', u'TrackingCategory', u'Payment',
+            u'TimesheetLine', u'NumberOfUnit', u'EarningsRate', u'DeductionType',
+            u'ReimbursementType', u'LeaveType', u'EarningsRates', u'DeductionTypes',
+            u'ReimbursementTypes', u'LeaveTypes')
 
     PLURAL_EXCEPTIONS = {'Addresse': 'Address'}
 
-    def __init__(self, name, oauth):
+    def __init__(self, name, oauth, api_name):
         self.oauth = oauth
-        self.api_url = oauth.api_url
         self.name = name
+        
+        self.api_url = oauth.api_url
+        if (api_name == "payroll"):
+            # Payroll endpoints have a different url prefix
+            self.api_url = self.api_url.replace("api.xro/2.0", "payroll.xro/1.0")
 
         # setup our singular variants of the name
         # only if the name ends in 0
@@ -78,7 +85,10 @@ class Manager(object):
                 elif len(data) > 1 and ((key in self.MULTI_LINES) or (key == self.singular)):
                     # our data is a collection and needs to be handled as such
                     if out:
-                        out.append(self.convert_to_dict(data))
+                        if isinstance(out, dict):
+                            out[key] = self.convert_to_dict(data)
+                        else:
+                            out.append(self.convert_to_dict(data))
                     else:
                         out = [self.convert_to_dict(data)]
 
