@@ -225,6 +225,7 @@ class Manager(object):
     def filter(self, **kwargs):
         headers = None
         offset = None        
+        page = None
         uri = '/'.join([self.api_url, self.name])
         if kwargs:
             if 'since' in kwargs:
@@ -236,7 +237,7 @@ class Manager(object):
                 offset = kwargs.pop('offset')
             
             if 'page' in kwargs:
-                offset = kwargs.pop('page')
+                page = kwargs.pop('page')
 
             def get_filter_params():
                 if key in self.BOOLEAN_FIELDS:
