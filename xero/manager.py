@@ -17,7 +17,8 @@ class Manager(object):
     RAW_RESPONSE_ENTITIES = ('Reports',) 
 
     DATETIME_FIELDS = (u'UpdatedDateUTC', u'Updated', u'FullyPaidOnDate', u'CreatedDateUTC',
-            u'ExpectedPaymentDate', u'PlannedPaymentDate', u'DateOfBirth', u'StartDate')
+            u'ExpectedPaymentDate', u'PlannedPaymentDate', u'DateOfBirth', u'StartDate',
+            u'EndDate')
     DATE_FIELDS = (u'DueDate', u'Date', u'JournalDate')
     BOOLEAN_FIELDS = (u'IsSupplier', u'IsCustomer')
 
@@ -42,7 +43,9 @@ class Manager(object):
 
         # setup our singular variants of the name
         # only if the name ends in 0
-        if name[-1] == "s":
+        if name in self.PLURAL_EXCEPTIONS:
+            self.singular = self.PLURAL_EXCEPTIONS[name]
+        elif name[-1] == "s":
             self.singular = name[:len(name)-1]
         else:
             self.singular = name
@@ -70,7 +73,19 @@ class Manager(object):
             keys = [l for l in deep_list if isinstance(l, unicode)]
             for key, data in zip(keys, lists):
 
-                if len(data) == 1:
+                if ((key in self.MULTI_LINES) or (key == self.singular)):
+                    # our data is a collection and needs to be handled as such
+                    if out:
+                        if isinstance(out, dict):
+                            # Some field names are both multi and not. If there's
+                            # already a populated dict, just go with it
+                            out[key] = self.convert_to_dict(data)
+                        else:
+                            out.append(self.convert_to_dict(data))
+                    else:
+                        out = [self.convert_to_dict(data)]
+
+                elif len(data) == 1:
                     # we're setting a value
                     # check to see if we need to apply any special
                     # formatting to the value
@@ -81,21 +96,17 @@ class Manager(object):
                         val = parse(val)
                     if key in self.DATE_FIELDS:
                         val = parse(val).date()
-
-                    out[key] = val
-
-                elif len(data) > 1 and ((key in self.MULTI_LINES) or (key == self.singular)):
-                    # our data is a collection and needs to be handled as such
-                    if out:
-                        if isinstance(out, dict):
-                            out[key] = self.convert_to_dict(data)
-                        else:
-                            out.append(self.convert_to_dict(data))
+                    
+                    if isinstance(out, dict):
+                        out[key] = val
                     else:
-                        out = [self.convert_to_dict(data)]
+                        out.append(val)
 
                 elif len(data) > 1:
-                    out[key] = self.convert_to_dict(data)
+                    if isinstance(out, dict):
+                        out[key] = self.convert_to_dict(data)
+                    else:
+                        out.append(self.convert_to_dict(data))
 
         elif len(deep_list) == 2:
             key = deep_list[0]
