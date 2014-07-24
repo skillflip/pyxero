@@ -112,7 +112,7 @@ class Manager(object):
             key = deep_list[0]
             data = deep_list[1]
             out[key] = self.convert_to_dict(data)
-        else:
+        elif len(deep_list) == 1:
             out = deep_list[0]
         return out
 
