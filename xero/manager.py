@@ -264,7 +264,7 @@ class Manager(object):
                 page = kwargs.pop('page')
 
             if 'order' in kwargs:
-                order = kwarge.pop('order')
+                order = kwargs.pop('order')
 
             def get_filter_params():
                 if key in self.BOOLEAN_FIELDS:
