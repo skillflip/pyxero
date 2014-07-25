@@ -249,6 +249,7 @@ class Manager(object):
         headers = None
         offset = None        
         page = None
+        order = None
         uri = '/'.join([self.api_url, self.name])
         if kwargs:
             if 'since' in kwargs:
@@ -261,6 +262,9 @@ class Manager(object):
             
             if 'page' in kwargs:
                 page = kwargs.pop('page')
+
+            if 'order' in kwargs:
+                order = kwarge.pop('order')
 
             def get_filter_params():
                 if key in self.BOOLEAN_FIELDS:
@@ -297,6 +301,9 @@ class Manager(object):
 
             if page:
                 query_string_items.append('page={0}'.format(page))
+
+            if order:
+                query_string_items.append('order={0}'.format(order))
 
             if len(query_string_items) > 0:
                 uri += "?" + '&'.join(query_string_items)
