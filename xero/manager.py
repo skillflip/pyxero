@@ -26,7 +26,8 @@ class Manager(object):
             u'JournalLine', u'TrackingCategory', u'Payment',
             u'TimesheetLine', u'NumberOfUnit', u'EarningsRate', u'DeductionType',
             u'ReimbursementType', u'LeaveType', u'EarningsRates', u'DeductionTypes',
-            u'ReimbursementTypes', u'LeaveTypes', u'Option')
+            u'ReimbursementTypes', u'LeaveTypes', u'Option', u'Allocation',
+            u'EarningsLine')
 
     PLURAL_EXCEPTIONS = {
             'Addresse': 'Address',
