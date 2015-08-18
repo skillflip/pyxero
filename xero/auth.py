@@ -84,7 +84,8 @@ class PublicCredentials(object):
     """
     def __init__(self, consumer_key, consumer_secret,
                  callback_uri=None, verified=False,
-                 oauth_token=None, oauth_token_secret=None):
+                 oauth_token=None, oauth_token_secret=None,
+                 scope=None):
         """Construct the auth instance.
 
         Must provide the consumer key and secret.
@@ -96,6 +97,7 @@ class PublicCredentials(object):
         self.consumer_secret = consumer_secret
         self.callback_uri = callback_uri
         self.verified = verified
+        self.scope = scope
         self._oauth = None
 
         if oauth_token and oauth_token_secret:
@@ -179,7 +181,7 @@ class PublicCredentials(object):
             (attr, getattr(self, attr))
             for attr in (
                 'consumer_key', 'consumer_secret', 'callback_uri',
-                'verified', 'oauth_token', 'oauth_token_secret'
+                'verified', 'oauth_token', 'oauth_token_secret', 'scope'
             )
             if getattr(self, attr) is not None
         )
@@ -240,7 +242,12 @@ class PublicCredentials(object):
     @property
     def url(self):
         "Returns the URL that can be visited to obtain a verifier code"
-        return AUTHORIZE_URL + '?' + urlencode({'oauth_token': self.oauth_token})
+        query_string = {'oauth_token': self.oauth_token}
+
+        if self.scope:
+            query_string['scope'] = self.scope
+
+        return AUTHORIZE_URL + '?' + urlencode(query_string)
 
     @property
     def oauth(self):
