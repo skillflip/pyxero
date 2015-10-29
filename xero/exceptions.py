@@ -18,13 +18,17 @@ class XeroBadRequest(XeroException):
     def __init__(self, response):
         # Extract the messages from the text.
         # parseString takes byte content, not unicode.
-        dom = parseString(response.text.encode(response.encoding))
-        messages = dom.getElementsByTagName('Message')
-
-        msg = messages[0].childNodes[0].data
-        self.errors = [
-            m.childNodes[0].data for m in messages[1:]
-        ]
+        try:
+            dom = parseString(response.text.encode(response.encoding))
+            messages = dom.getElementsByTagName('Message')
+    
+            msg = messages[0].childNodes[0].data
+            self.errors = [
+                m.childNodes[0].data for m in messages[1:]
+            ]
+        except Exception: # Couldn't parse XML for some reason
+            msg = response.text
+            
         super(XeroBadRequest, self).__init__(response, msg)
 
 
